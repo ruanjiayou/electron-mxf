@@ -1,7 +1,7 @@
 import { Input, message, Modal, Alert, notification, Button } from 'antd'
 import { Observer, useLocalStore, useLocalObservable } from 'mobx-react-lite'
 import { AlignAside, FullHeight, FullHeightAuto, Padding } from './style.js'
-import { FolderOutlined, SearchOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
+import { FolderOutlined, SearchOutlined, MenuFoldOutlined, MenuUnfoldOutlined, CloseOutlined, FolderOpenOutlined } from '@ant-design/icons'
 import { useEffectOnce } from 'react-use';
 import { useCallback, useRef } from 'react';
 import styled from 'styled-components';
@@ -44,12 +44,20 @@ export default function App() {
     console.log(files)
     local.files = files;
     if (files.length) {
-      local.setPlayUrl(local.files[0])
+      if (window.electron) {
+        window.electron.stopVLC().then(() => {
+          window.electron.startVLC(local.dir_path + '/' + local.files[0].filename)
+        })
+      } else {
+        local.setPlayUrl(local.files[0])
+      }
     }
   })
   useEffectOnce(() => {
-    local.dir_path = window.electron.getStoreValue('dir_path') || (is_dev ? '' : 'K:\Render');
-    local.is_fold = window.electron.getStoreValue('is_fold') || false;
+    if (window.electron) {
+      local.dir_path = window.electron.getStoreValue('dir_path') || (is_dev ? '' : 'K:\Render');
+      local.is_fold = window.electron.getStoreValue('is_fold') || false;
+    }
   })
   return <Observer>{() => (
     <FullHeight>
@@ -67,6 +75,10 @@ export default function App() {
                 console.log(filepath)
               }
             })
+          }}
+          />}
+          addonAfter={<CloseOutlined onClick={() => {
+            window.electron.stopVLC();
           }} />}
         />
         <Input

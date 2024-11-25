@@ -22,7 +22,11 @@ contextBridge.exposeInMainWorld('electron', {
       })
     })
   },
-  getFilesSortTime: async (dir, filename) => await ipcRenderer.invoke('get-files-sorttime', dir, filename)
+  getFilesSortTime: async (dir, filename) => await ipcRenderer.invoke('get-files-sorttime', dir, filename),
+  startVLC: (filepath) => {
+    ipcRenderer.send('start-vlc', filepath)
+  },
+  stopVLC: async () => await ipcRenderer.invoke('stop-vlc'),
 });
 
 contextBridge.exposeInMainWorld('versions', {

@@ -3,8 +3,11 @@ const fs = require('node:fs')
 const path = require('node:path')
 const Store = require('electron-store');
 const store = new Store();
+const { spawn, execSync } = require('child_process');
+const psTree = require('ps-tree');
 
 const is_dev = process.env.NODE_ENV === 'development';
+let vlcProcess;
 
 // 定义ipcRenderer监听事件
 ipcMain.on('setStore', (_, key, value) => {
@@ -23,6 +26,7 @@ const createWindow = () => {
   const win = new BrowserWindow({
     width: 1080,
     height: 720,
+    resizable: false,
     // titleBarStyle: "default", // mac隐藏导航栏
     // frame: false, // window隐藏导航栏
     // autoHideMenuBar: true, // 自动隐藏菜单栏
@@ -61,8 +65,16 @@ const createWindow = () => {
     return results.sort((a, b) => b.mtime - a.mtime);
   })
 
+  ipcMain.on('start-vlc', (event, filepath) => {
+    startVLCInElectron(win, filepath);
+  });
+
+  ipcMain.handle('stop-vlc', async () => {
+    return stopVLC();
+  });
+
   // 置顶
-  win.setAlwaysOnTop(true)
+  // win.setAlwaysOnTop(true)
   if (is_dev) {
     win.webContents.openDevTools({ mode: 'detach' })
     win.loadURL('http://localhost:3000');
@@ -79,3 +91,61 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
+
+
+function startVLCInElectron(parentWindow, filepath) {
+  console.log(filepath)
+  // 获取 Electron 窗口的句柄 (Windows)
+  const electronWindowHandle = parentWindow.getNativeWindowHandle();
+
+
+  // 启动 VLC 并嵌入窗口
+  const command = process.platform === 'win32'
+    ? `vlc --no-qt-fs --qt-start-minimized --width=720 --height=480 --video-x=0 --video-y=0 --video-title="Embedded VLC" --qt-minimal-view`
+    : `/Applications/VLC.app/Contents/MacOS/VLC --width=720 --height=480 --video-x=100 --video-y=100 ${filepath}`;
+  vlcProcess = spawn(command, {
+    shell: true,
+    detached: true,
+    stdio: 'ignore',
+  });
+  vlcProcess.unref();
+}
+
+async function stopVLC() {
+  if (vlcProcess) {
+    await killProcessTree(vlcProcess.pid);
+    vlcProcess = null;
+  }
+  // 'killall VLC' vlcProcess.kill() 都没用
+  // const result = execSync('killall VLC');
+  // console.log(result.toString())
+}
+
+// 递归杀死所有子进程
+async function killProcessTree(pid) {
+  return new Promise((resolve, reject) => {
+    psTree(pid, (err, children) => {
+      if (err) {
+        console.error('Failed to fetch process tree:', err);
+
+        return resolve(false);
+      }
+
+      // 获取所有子进程的 PID
+      const pids = children.map(child => child.PID);
+      pids.push(pid); // 添加父进程 PID
+
+      // 逐个杀死进程
+      for (const pid of pids) {
+        try {
+          process.kill(pid, 'SIGKILL');
+          console.log(`Killed process with PID: ${pid}`);
+        } catch (error) {
+          console.error(`Failed to kill process ${pid}:`, error);
+        }
+      }
+      resolve(true);
+    });
+  });
+
+}

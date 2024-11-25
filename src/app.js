@@ -1,4 +1,4 @@
-import { Input, message, Modal, Alert, notification, Button } from 'antd'
+import { Input, message, Modal, Alert, notification, Button, Select } from 'antd'
 import { Observer, useLocalStore, useLocalObservable } from 'mobx-react-lite'
 import { AlignAside, FullHeight, FullHeightAuto, Padding } from './style.js'
 import { FolderOutlined, SearchOutlined, MenuFoldOutlined, MenuUnfoldOutlined, CloseOutlined, FolderOpenOutlined } from '@ant-design/icons'
@@ -23,8 +23,9 @@ export default function App() {
     isCompositing: false,
     dir_path: is_dev ? '' : 'K:\Render',
     current_play_url: '',
+    file_suffix: 'mxf',
     search: '',
-    is_fold: false,
+    is_fold: true,
     files: [],
     setPlayUrl(file) {
       local.current_play_url = local.dir_path + '/' + file.filename;
@@ -40,8 +41,7 @@ export default function App() {
       return notification.open({ message: '错误', description: '请先选择文件夹' })
     }
     const filename = local.search.trim();
-    const files = await window.electron.getFilesSortTime(local.dir_path, filename);
-    console.log(files)
+    const files = await window.electron.getFilesSortTime(local.dir_path, filename, local.file_suffix);
     local.files = files;
     if (files.length) {
       if (window.electron) {
@@ -56,6 +56,7 @@ export default function App() {
   useEffectOnce(() => {
     if (window.electron) {
       local.dir_path = window.electron.getStoreValue('dir_path') || (is_dev ? '' : 'K:\Render');
+      local.file_suffix = window.electron.getStoreValue('file_suffix') || 'mxf';
       local.is_fold = window.electron.getStoreValue('is_fold') || false;
     }
   })
@@ -72,7 +73,6 @@ export default function App() {
                 const filepath = result.filePaths[0]
                 window.electron.setStoreValue('dir_path', filepath)
                 local.dir_path = filepath
-                console.log(filepath)
               }
             })
           }}
@@ -86,7 +86,13 @@ export default function App() {
           autoFocus
           allowClear
           style={{ marginTop: 15 }}
-          addonBefore={'文件名'}
+          addonBefore={<Select value={local.file_suffix} onSelect={v => {
+            local.file_suffix = v;
+            window.electron.setStoreValue('file_suffix', filepath)
+          }}>
+            <Select.Option value="mxf"></Select.Option>
+            <Select.Option value="mp4"></Select.Option>
+          </Select>}
           addonAfter={<SearchOutlined onClick={onSearch} />}
           onCompositionStart={() => {
             local.isCompositing = true;
@@ -123,7 +129,13 @@ export default function App() {
                   title={file.filename}
                   selected={local.current_play_url === `${local.dir_path}/${file.filename}`}
                   onClick={() => {
-                    local.setPlayUrl(file);
+                    if (window.electron) {
+                      window.electron.stopVLC().then(() => {
+                        window.electron.startVLC(local.dir_path + '/' + file.filename)
+                      })
+                    } else {
+                      local.setPlayUrl(file)
+                    }
                   }}>
                   {file.filename}
                 </FileItem >

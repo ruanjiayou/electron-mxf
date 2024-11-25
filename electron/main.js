@@ -50,14 +50,14 @@ const createWindow = () => {
     })
   })
   // 搜索文件 
-  ipcMain.handle('get-files-sorttime', async (event, dir, filename) => {
+  ipcMain.handle('get-files-sorttime', async (event, dir, filename, suffix) => {
     const existed = fs.existsSync(dir);
     const results = [];
     if (existed) {
       const files = fs.readdirSync(dir, { encoding: 'utf-8' });
       files.filter(file => {
         file = file.toLowerCase();
-        return file.includes(filename.toLowerCase()) && (is_dev || file.endsWith('.mxf'));
+        return file.includes(filename.toLowerCase()) && (!suffix || file.endsWith(suffix));
       }).forEach((file) => {
         results.push({ filename: file, mtime: fs.statSync(path.join(dir, file)).mtime })
       });
@@ -101,7 +101,7 @@ function startVLCInElectron(parentWindow, filepath) {
 
   // 启动 VLC 并嵌入窗口
   const command = process.platform === 'win32'
-    ? `vlc --no-qt-fs --qt-start-minimized --width=720 --height=480 --video-x=0 --video-y=0 --video-title="Embedded VLC" --qt-minimal-view`
+    ? `"${path.normalize('C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe')}" --no-qt-fs --qt-start-minimized --width=720 --height=480 --video-x=0 --video-y=0 --video-title="Embedded VLC" --qt-minimal-view ${filepath}`
     : `/Applications/VLC.app/Contents/MacOS/VLC --width=720 --height=480 --video-x=100 --video-y=100 ${filepath}`;
   vlcProcess = spawn(command, {
     shell: true,

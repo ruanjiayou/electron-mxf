@@ -74,12 +74,12 @@ const createWindow = () => {
   });
 
   // 置顶
-  // win.setAlwaysOnTop(true)
+  win.setAlwaysOnTop(true)
   if (is_dev) {
     win.webContents.openDevTools({ mode: 'detach' })
     win.loadURL('http://localhost:3000');
   } else {
-    win.loadFile('../build/index.html')
+    win.loadFile(path.join(__dirname, '../build/index.html'));
   }
 
 }

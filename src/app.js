@@ -5,6 +5,7 @@ import { FolderOutlined, SearchOutlined, MenuFoldOutlined, MenuUnfoldOutlined, C
 import { useEffectOnce } from 'react-use';
 import { useCallback, useRef } from 'react';
 import styled from 'styled-components';
+import * as CONST from './const.js';
 
 const is_dev = process.env.NODE_ENV === 'development';
 
@@ -25,8 +26,10 @@ export default function App() {
     current_play_url: '',
     file_suffix: 'mxf',
     search: '',
-    is_fold: true,
     files: [],
+    [CONST.STORE.IS_FOLD]: true,
+    [CONST.STORE.SHOW_DIR]: false,
+    [CONST.STORE.SHOW_VIDEO]: false,
     setPlayUrl(file) {
       local.current_play_url = local.dir_path + '/' + file.filename;
     }
@@ -41,54 +44,71 @@ export default function App() {
       return notification.open({ message: '错误', description: '请先选择文件夹' })
     }
     const filename = local.search.trim();
-    const files = await window.electron.getFilesSortTime(local.dir_path, filename, local.file_suffix);
+    const files = await window.electron[CONST.EVENT.GetFilesSortByTime](local.dir_path, filename, local.file_suffix);
     local.files = files;
     if (files.length) {
+      local.setPlayUrl(local.files[0])
       if (window.electron) {
-        window.electron.stopVLC().then(() => {
-          window.electron.startVLC(local.dir_path + '/' + local.files[0].filename)
+        window.electron[CONST.EVENT.StopVlc]().then(() => {
+          window.electron[CONST.EVENT.StartVlc](local.dir_path + '/' + local.files[0].filename)
         })
-      } else {
-        local.setPlayUrl(local.files[0])
       }
     }
   })
   useEffectOnce(() => {
     if (window.electron) {
-      local.dir_path = window.electron.getStoreValue('dir_path') || (is_dev ? '' : 'K:\Render');
-      local.file_suffix = window.electron.getStoreValue('file_suffix') || 'mxf';
-      local.is_fold = window.electron.getStoreValue('is_fold') || false;
+      local.dir_path = window.electron.getStoreValue(CONST.STORE.DIR_PATH) || (is_dev ? '' : 'K:\Render');
+      local.file_suffix = window.electron.getStoreValue(CONST.STORE.FILE_SUFFIX) || 'mxf';
+      local[CONST.STORE.IS_FOLD] = window.electron.getStoreValue(CONST.STORE.IS_FOLD) || false;
+      local[CONST.STORE.SHOW_DIR] = window.electron.getStoreValue(CONST.STORE.SHOW_DIR) || false;
+      local[CONST.STORE.SHOW_VIDEO] = window.electron.getStoreValue(CONST.STORE.SHOW_VIDEO) || false;
+    }
+    window.onmessage = function (e) {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.command === CONST.STORE.SHOW_DIR) {
+          local[CONST.STORE.SHOW_DIR] = data.value;
+        } else if (data.command === CONST.STORE.SHOW_VIDEO) {
+          local[CONST.STORE.SHOW_VIDEO] = data.value;
+        }
+      } catch (e) {
+
+      }
     }
   })
   return <Observer>{() => (
     <FullHeight>
-      <Padding>
+      <Padding style={{ display: local[CONST.STORE.SHOW_DIR] ? 'flex' : 'none', flexDirection: 'row' }}>
         <Input
           value={local.dir_path}
           readOnly
           placeholder='请选中文件夹路径'
           addonBefore={<FolderOutlined onClick={() => {
-            window.electron.openDialog().then(result => {
+            window.electron[CONST.EVENT.OpenDialog]().then(result => {
               if (result.canceled === false && result.filePaths[0]) {
                 const filepath = result.filePaths[0]
-                window.electron.setStoreValue('dir_path', filepath)
+                window.electron.setStoreValue(CONST.STORE.DIR_PATH, filepath)
                 local.dir_path = filepath
               }
             })
           }}
           />}
           addonAfter={<CloseOutlined onClick={() => {
-            window.electron.stopVLC();
+            window.electron[CONST.EVENT.StopVlc]();
           }} />}
         />
+        <Button style={{ marginLeft: 10 }} onClick={() => {
+          window.location.reload();
+        }}>刷新</Button>
+      </Padding>
+      <Padding>
         <Input
           disabled={!local.dir_path}
           autoFocus
           allowClear
-          style={{ marginTop: 15 }}
           addonBefore={<Select value={local.file_suffix} onSelect={v => {
             local.file_suffix = v;
-            window.electron.setStoreValue('file_suffix', filepath)
+            window.electron.setStoreValue(CONST.STORE.FILE_SUFFIX, v)
           }}>
             <Select.Option value="mxf"></Select.Option>
             <Select.Option value="mp4"></Select.Option>
@@ -123,42 +143,39 @@ export default function App() {
         <AlignAside style={{ height: '100%' }}>
           <div style={{ position: 'relative', height: '100%', borderRight: '2px dashed #ccc', width: local.is_fold ? 0 : 280 }}>
             <div style={{ height: '100%', overflowX: 'hidden', overflowY: 'auto' }}>
-              {!local.is_fold && local.files.map(file => (
+              {!local[CONST.STORE.IS_FOLD] && local.files.map(file => (
                 <FileItem
                   key={file.filename}
                   title={file.filename}
                   selected={local.current_play_url === `${local.dir_path}/${file.filename}`}
                   onClick={() => {
+                    local.setPlayUrl(file)
                     if (window.electron) {
-                      window.electron.stopVLC().then(() => {
-                        window.electron.startVLC(local.dir_path + '/' + file.filename)
+                      window.electron[CONST.EVENT.StopVlc]().then(() => {
+                        window.electron[CONST.EVENT.StartVlc](local.dir_path + '/' + file.filename)
                       })
-                    } else {
-                      local.setPlayUrl(file)
                     }
                   }}>
                   {file.filename}
                 </FileItem >
               ))}
             </div >
-            <div style={{ position: 'absolute', top: 0, left: 'calc(100% + 2px)' }} onClick={() => { local.is_fold = !local.is_fold; window.electron.setStoreValue('is_fold', local.is_fold) }}>{local.is_fold ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}</div>
+            <div style={{ position: 'absolute', top: 0, left: 'calc(100% + 2px)' }} onClick={() => { local[CONST.STORE.IS_FOLD] = !local.is_fold; window.electron.setStoreValue(CONST.STORE.IS_FOLD, local[CONST.STORE.IS_FOLD]) }}>{local[CONST.STORE.IS_FOLD] ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}</div>
           </div >
           <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
-            <div>
+            <div style={{ display: local[CONST.STORE.SHOW_VIDEO] ? 'block' : 'none' }}>
               <video
                 id="player"
                 ref={node => playerRef.current = node}
                 controls
+                autoPlay={false}
                 src={local.current_play_url ? `file://${local.current_play_url}` : ''}
-                style={{ width: 720, height: 480, backgroundColor: 'black' }}
+                style={{ width: 450, height: 300, backgroundColor: 'black' }}
                 onError={e => {
                   console.log(e, e.message)
                 }}
               ></video>
             </div>
-            <Button onClick={() => {
-              window.location.reload();
-            }}>刷新</Button>
           </div>
         </AlignAside >
       </FullHeightAuto >

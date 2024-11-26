@@ -1,13 +1,16 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, screen, Menu } = require('electron')
 const fs = require('node:fs')
 const path = require('node:path')
 const Store = require('electron-store');
 const store = new Store();
 const { spawn, execSync } = require('child_process');
 const psTree = require('ps-tree');
+const CONST = require('../src/const.js');
 
 const is_dev = process.env.NODE_ENV === 'development';
 let vlcProcess;
+let half_width = 720;
+let half_height = 480;
 
 // 定义ipcRenderer监听事件
 ipcMain.on('setStore', (_, key, value) => {
@@ -23,10 +26,14 @@ app.disableHardwareAcceleration();
 app.commandLine.appendSwitch('disable-software-rasterizer');
 
 const createWindow = () => {
+  const Size = screen.getPrimaryDisplay().workAreaSize;
+  const width = Math.floor(Size.width / 2);
+  half_width = width;
+  half_height = Math.floor(Size.height / 2);
   const win = new BrowserWindow({
-    width: 1080,
-    height: 720,
-    resizable: false,
+    width: half_width,
+    height: half_height,
+    // resizable: false,
     // titleBarStyle: "default", // mac隐藏导航栏
     // frame: false, // window隐藏导航栏
     // autoHideMenuBar: true, // 自动隐藏菜单栏
@@ -36,21 +43,24 @@ const createWindow = () => {
       preload: path.join(__dirname, 'preload.js')
     },
   })
-  ipcMain.on('setTitle', (event, title) => {
+  ipcMain.on(CONST.EVENT.SetTitle, (event, title) => {
     const webContents = event.sender
     const w = BrowserWindow.fromWebContents(webContents)
     w.setTitle(title)
   })
   // 选择文件夹
-  ipcMain.on('openDialog', (event) => {
-    dialog.showOpenDialog(win, {
-      properties: ['openDirectory']
-    }).then((result) => {
-      event.sender.send('selectedDirectory', result)
+  ipcMain.handle(CONST.EVENT.OpenDialog, async (event) => {
+    return new Promise((resolve) => {
+      dialog.showOpenDialog(win, {
+        properties: ['openDirectory']
+      }).then((result) => {
+        resolve(result);
+      })
     })
+
   })
   // 搜索文件 
-  ipcMain.handle('get-files-sorttime', async (event, dir, filename, suffix) => {
+  ipcMain.handle(CONST.EVENT.GetFilesSortByTime, async (event, dir, filename, suffix) => {
     const existed = fs.existsSync(dir);
     const results = [];
     if (existed) {
@@ -65,16 +75,67 @@ const createWindow = () => {
     return results.sort((a, b) => b.mtime - a.mtime);
   })
 
-  ipcMain.on('start-vlc', (event, filepath) => {
+  ipcMain.handle(CONST.EVENT.StartVlc, (event, filepath) => {
     startVLCInElectron(win, filepath);
   });
 
-  ipcMain.handle('stop-vlc', async () => {
+  ipcMain.handle(CONST.EVENT.StopVlc, async () => {
     return stopVLC();
   });
+  ipcMain.on(CONST.EVENT.ShowContextMenu, (event) => {
+    const show_dir = store.get(CONST.STORE.SHOW_DIR) || false;
+    const show_video = store.get(CONST.STORE.SHOW_VIDEO) || false;
+    const template = [
+      {
+        label: '显示文件夹设置',
+        type: 'checkbox',
+        checked: show_dir,
+        click: (e) => {
+          event.sender.send(CONST.EVENT.ReceiveCommand, CONST.STORE.SHOW_DIR, e.checked);
+          store.set(CONST.STORE.SHOW_DIR, e.checked);
+        }
+      },
+      { type: 'separator' },
+      {
+        label: '显示视频框',
+        type: 'checkbox',
+        checked: show_video,
+        click: (e) => {
+          event.sender.send(CONST.EVENT.ReceiveCommand, CONST.STORE.SHOW_VIDEO, e.checked);
+          store.set(CONST.STORE.SHOW_VIDEO, e.checked);
+        }
+      },
+      { type: 'separator' },
+      {
+        label: '关闭程序',
+        checked: show_video,
+        click: () => {
+          app.quit();
+        }
+      },
+    ]
+    const menu = Menu.buildFromTemplate(template)
+    menu.popup({ window: BrowserWindow.fromWebContents(event.sender) })
+  });
+
 
   // 置顶
   win.setAlwaysOnTop(true)
+  win.setPosition(width, 0);
+  // Menu.setApplicationMenu(null);
+  // const menuBar = [
+  //   {
+  //     label: '设置',
+  //     submenu: [
+  //       { label: '显示文件夹' },
+  //       { label: '显示视频框' },
+  //     ]
+  //   }
+  // ];
+  // // 构建菜单项
+  // const menu = Menu.buildFromTemplate(menuBar);
+  // // 设置一个顶部菜单栏
+  // Menu.setApplicationMenu(menu);
   if (is_dev) {
     win.webContents.openDevTools({ mode: 'detach' })
     win.loadURL('http://localhost:3000');
@@ -94,15 +155,10 @@ app.whenReady().then(() => {
 
 
 function startVLCInElectron(parentWindow, filepath) {
-  console.log(filepath)
-  // 获取 Electron 窗口的句柄 (Windows)
-  const electronWindowHandle = parentWindow.getNativeWindowHandle();
-
-
   // 启动 VLC 并嵌入窗口
   const command = process.platform === 'win32'
-    ? `"${path.normalize('C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe')}" --no-qt-fs --qt-start-minimized --width=720 --height=480 --video-x=0 --video-y=0 --video-title="Embedded VLC" --qt-minimal-view ${filepath}`
-    : `/Applications/VLC.app/Contents/MacOS/VLC --width=720 --height=480 --video-x=100 --video-y=100 ${filepath}`;
+    ? `"${path.normalize('C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe')}" --no-qt-fs --qt-start-minimized --width=${half_width} --video-x=0 --video-y=0 --video-on-top --video-title="Embedded VLC" --qt-minimal-view ${filepath}`
+    : `/Applications/VLC.app/Contents/MacOS/VLC --width=${half_width} --video-x=0 --video-y=0 --video-on-top ${filepath}`;
   vlcProcess = spawn(command, {
     shell: true,
     detached: true,
@@ -141,7 +197,7 @@ async function killProcessTree(pid) {
           process.kill(pid, 'SIGKILL');
           console.log(`Killed process with PID: ${pid}`);
         } catch (error) {
-          console.error(`Failed to kill process ${pid}:`, error);
+          console.error(`Failed to kill process ${pid}:`, error.message);
         }
       }
       resolve(true);

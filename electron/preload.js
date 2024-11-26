@@ -1,4 +1,5 @@
-const { contextBridge, ipcRenderer, dialog } = require('electron')
+const { contextBridge, ipcRenderer, dialog } = require('electron');
+const CONST = require('../src/const.js');
 
 contextBridge.exposeInMainWorld('electron', {
   setStoreValue: (key, value) => {
@@ -8,25 +9,11 @@ contextBridge.exposeInMainWorld('electron', {
     const resp = ipcRenderer.sendSync("getStore", key)
     return resp
   },
-  setTitle: (title) => {
-    ipcRenderer.send('setTitle', title)
-  },
-  openDialog: async () => {
-    return new Promise((resolve) => {
-      ipcRenderer.send('openDialog', {
-        properties: ['openDirectory'],
-        title: '选择文件夹',
-      });
-      ipcRenderer.once('selectedDirectory', function (e, result) {
-        resolve(result);
-      })
-    })
-  },
-  getFilesSortTime: async (dir, filename, suffix) => await ipcRenderer.invoke('get-files-sorttime', dir, filename, suffix),
-  startVLC: (filepath) => {
-    ipcRenderer.send('start-vlc', filepath)
-  },
-  stopVLC: async () => await ipcRenderer.invoke('stop-vlc'),
+  [CONST.EVENT.SetTitle]: async (title) => await ipcRenderer.invoke(CONST.EVENT.SetTitle, title),
+  [CONST.EVENT.OpenDialog]: async () => await ipcRenderer.invoke(CONST.EVENT.OpenDialog),
+  [CONST.EVENT.GetFilesSortByTime]: async (dir, filename, suffix) => await ipcRenderer.invoke(CONST.EVENT.GetFilesSortByTime, dir, filename, suffix),
+  [CONST.EVENT.StartVlc]: async (filepath) => await ipcRenderer.invoke(CONST.EVENT.StartVlc, filepath),
+  [CONST.EVENT.StopVlc]: async () => await ipcRenderer.invoke(CONST.EVENT.StopVlc),
 });
 
 contextBridge.exposeInMainWorld('versions', {
@@ -34,4 +21,13 @@ contextBridge.exposeInMainWorld('versions', {
   chrome: () => process.versions.chrome,
   electron: () => process.versions.electron
   // 除函数之外，我们也可以暴露变量
+})
+
+window.addEventListener('contextmenu', (e) => {
+  e.preventDefault()
+  ipcRenderer.send(CONST.EVENT.ShowContextMenu)
+})
+
+ipcRenderer.on(CONST.EVENT.ReceiveCommand, (e, command, value) => {
+  window.postMessage(JSON.stringify({ command, value }), '*')
 })

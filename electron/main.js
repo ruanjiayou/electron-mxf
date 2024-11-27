@@ -5,7 +5,7 @@ const Store = require('electron-store');
 const store = new Store();
 const { spawn, execSync } = require('child_process');
 const psTree = require('ps-tree');
-const CONST = require('../src/const.js');
+const CONST = require('./const.js');
 
 const is_dev = app.isPackaged;
 
@@ -141,7 +141,7 @@ const createWindow = () => {
     win.webContents.openDevTools({ mode: 'detach' })
     win.loadURL('http://localhost:3000');
   } else {
-    win.loadFile(path.join(__dirname, '../build/index.html'));
+    win.loadFile(path.join(__dirname, './build/index.html'));
   }
 
 }

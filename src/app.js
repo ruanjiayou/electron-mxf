@@ -57,10 +57,10 @@ export default function App() {
   })
   useEffectOnce(() => {
     if (window.electron) {
-      local.dir_path = window.electron.getStoreValue(CONST.STORE.DIR_PATH) || (is_dev ? '' : 'K:\Render');
+      local.dir_path = window.electron.getStoreValue(CONST.STORE.DIR_PATH) || (is_dev ? '' : 'K:\\Render');
       local.file_suffix = window.electron.getStoreValue(CONST.STORE.FILE_SUFFIX) || 'mxf';
       local[CONST.STORE.IS_FOLD] = window.electron.getStoreValue(CONST.STORE.IS_FOLD) || false;
-      local[CONST.STORE.SHOW_DIR] = window.electron.getStoreValue(CONST.STORE.SHOW_DIR) || true;
+      local[CONST.STORE.SHOW_DIR] = window.electron.getStoreValue(CONST.STORE.SHOW_DIR) || false;
       local[CONST.STORE.SHOW_VIDEO] = window.electron.getStoreValue(CONST.STORE.SHOW_VIDEO) || false;
     }
     window.onmessage = function (e) {

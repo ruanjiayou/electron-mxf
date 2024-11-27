@@ -1,5 +1,5 @@
 const { contextBridge, ipcRenderer, dialog } = require('electron');
-const CONST = require('../src/const.js');
+const CONST = require('./const.js');
 
 contextBridge.exposeInMainWorld('electron', {
   setStoreValue: (key, value) => {

@@ -18,7 +18,7 @@ module.exports = {
         name: "demo",
         authors: 'ruanjiayou',
         setupExe: 'demo.exe',
-        noMsi: true,
+        noMsi: false,
         createDesktopShortcut: true,
       },
     },

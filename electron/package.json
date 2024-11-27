@@ -20,12 +20,12 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.5.0",
     "@electron-forge/plugin-fuses": "^7.5.0",
     "@electron/fuses": "^1.8.0",
-    "cross-env": "^7.0.3",
     "electron": "^19.1.9",
     "electron-squirrel-startup": "^1.0.1",
-    "ps-tree": "^1.2.0"
+    "cross-env": "^7.0.3"
   },
   "dependencies": {
-    "electron-store": "^7.0.3"
+    "electron-store": "^7.0.3",
+    "ps-tree": "^1.2.0"
   }
 }

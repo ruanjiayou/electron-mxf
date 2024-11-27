@@ -157,8 +157,8 @@ app.whenReady().then(() => {
 function startVLCInElectron(parentWindow, filepath) {
   // 启动 VLC 并嵌入窗口
   const command = process.platform === 'win32'
-    ? `"${path.normalize('C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe')}" --no-qt-fs --qt-start-minimized --width=${half_width} --video-x=0 --video-y=0 --aspect-ratio=16:9 --video-on-top --video-title="Embedded VLC" --qt-minimal-view ${filepath}`
-    : `/Applications/VLC.app/Contents/MacOS/VLC --width=${half_width} --video-x=0 --video-y=0 --aspect-ratio=16:9 --video-on-top ${filepath}`;
+    ? `"${path.normalize('C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe')}" --no-qt-fs --qt-start-minimized --width=${half_width} --video-x=0 --video-y=0 --aspect-ratio=16:9 --zoom=0.5 --video-on-top --video-title="Embedded VLC" --qt-minimal-view ${filepath}`
+    : `/Applications/VLC.app/Contents/MacOS/VLC --width=${half_width} --video-x=0 --video-y=0 --aspect-ratio=16:9 --zoom=0.5 --video-on-top ${filepath}`;
   vlcProcess = spawn(command, {
     shell: true,
     detached: true,

@@ -6,7 +6,6 @@ module.exports = {
     asar: true,
     overwrite: true,
     ignore: [/\.git/, /node_modules\/\.bin/],
-    extraResource: ['./static'],
     "win": { // Windows平台的配置
       "publisherName": "ruanjiayou", // 发布者名称
     },

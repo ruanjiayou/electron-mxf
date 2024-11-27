@@ -7,7 +7,8 @@ const { spawn, execSync } = require('child_process');
 const psTree = require('ps-tree');
 const CONST = require('../src/const.js');
 
-const is_dev = process.env.NODE_ENV === 'development';
+const is_dev = app.isPackaged;
+
 let vlcProcess;
 let half_width = 720;
 let half_height = 480;

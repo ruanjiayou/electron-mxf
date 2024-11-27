@@ -5,7 +5,7 @@
   "main": "electron/main.js",
   "homepage": ".",
   "scripts": {
-    "start": "cross-env NODE_ENV=development react-app-rewired start",
+    "start": "cross-env NODE_ENV=development PUBLIC_URL=. react-scripts start",
     "build": "react-app-rewired build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

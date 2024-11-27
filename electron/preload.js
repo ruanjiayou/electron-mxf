@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('electron', {
   [CONST.EVENT.GetFilesSortByTime]: async (dir, filename, suffix) => await ipcRenderer.invoke(CONST.EVENT.GetFilesSortByTime, dir, filename, suffix),
   [CONST.EVENT.StartVlc]: async (filepath) => await ipcRenderer.invoke(CONST.EVENT.StartVlc, filepath),
   [CONST.EVENT.StopVlc]: async () => await ipcRenderer.invoke(CONST.EVENT.StopVlc),
+  [CONST.EVENT.OpenDevTool]: async () => await ipcRenderer.invoke(CONST.EVENT.OpenDevTool),
 });
 
 contextBridge.exposeInMainWorld('versions', {

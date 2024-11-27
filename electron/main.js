@@ -10,8 +10,8 @@ const CONST = require('./const.js');
 const is_dev = !app.isPackaged;
 
 let vlcProcess;
-let half_width = 720;
-let half_height = 480;
+let width = 720;
+let height = 480;
 
 // 定义ipcRenderer监听事件
 ipcMain.on('setStore', (_, key, value) => {
@@ -28,9 +28,8 @@ app.commandLine.appendSwitch('disable-software-rasterizer');
 
 const createWindow = () => {
   const Size = screen.getPrimaryDisplay().workAreaSize;
-  const width = Math.floor(Size.width / 2);
-  half_width = width;
-  half_height = Math.floor(Size.height / 2);
+  width = Size.width;
+  height = Size.height;
   const win = new BrowserWindow({
     width: Math.floor(Size.width / 6),
     height: 200,
@@ -106,6 +105,15 @@ const createWindow = () => {
           store.set(CONST.STORE.SHOW_VIDEO, e.checked);
         }
       },
+      {
+        type: 'separator',
+      },
+      {
+        label: '打开控制台',
+        click: () => {
+          win.webContents.openDevTools({ mode: 'detach' })
+        }
+      },
       { type: 'separator' },
       {
         label: '关闭程序',
@@ -122,28 +130,9 @@ const createWindow = () => {
 
   // 置顶
   win.setAlwaysOnTop(true)
-  win.setPosition(width, 0);
+  win.setPosition(Math.floor(width / 2), 0);
   Menu.setApplicationMenu(null);
-  // const menuBar = [
-  //   {
-  //     label: '设置',
-  //     submenu: [
-  //       { label: '显示文件夹' },
-  //       { label: '显示视频框' },
-  //     ]
-  //   }
-  // ];
-  // // 构建菜单项
-  // const menu = Menu.buildFromTemplate(menuBar);
-  // // 设置一个顶部菜单栏
-  // Menu.setApplicationMenu(menu);
-  if (is_dev) {
-    win.loadURL('http://localhost:3000');
-    win.webContents.openDevTools({ mode: 'detach' })
-  } else {
-    win.loadFile(path.join(__dirname, './build/index.html'));
-  }
-
+  win.loadFile(path.join(__dirname, './build/index.html'));
 }
 app.whenReady().then(() => {
 
@@ -158,8 +147,8 @@ app.whenReady().then(() => {
 function startVLCInElectron(parentWindow, filepath) {
   // 启动 VLC 并嵌入窗口
   const command = process.platform === 'win32'
-    ? `"${path.normalize('C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe')}" --no-qt-fs --qt-start-minimized --width=${half_width} --video-x=0 --video-y=0 --aspect-ratio=16:9 --zoom=0.5 --video-on-top --video-title="Embedded VLC" --qt-minimal-view ${filepath}`
-    : `/Applications/VLC.app/Contents/MacOS/VLC --width=${half_width} --video-x=0 --video-y=0 --aspect-ratio=16:9 --zoom=0.5 --video-on-top ${filepath}`;
+    ? `"${path.normalize('C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe')}" --no-qt-fs --qt-start-minimized --width=${Math.floor(width / 2.5)} --video-x=0 --video-y=0 --aspect-ratio=16:9 --zoom=0.3 --video-on-top --video-title="Embedded VLC" ${filepath}`
+    : `/Applications/VLC.app/Contents/MacOS/VLC --width=${Math.floor(width / 2.5)} --video-x=0 --video-y=0 --aspect-ratio=16:9 --zoom=0.3 --video-on-top ${filepath}`;
   vlcProcess = spawn(command, {
     shell: true,
     detached: true,

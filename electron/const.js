@@ -14,5 +14,6 @@ module.exports = {
       StopVlc: 'stop-vlc',
       ShowContextMenu: 'show-context-menu',
       ReceiveCommand: 'context-menu-command',
+      OpenDevTool: 'open-devtool',
     },
   }

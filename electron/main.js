@@ -7,7 +7,7 @@ const { spawn, execSync } = require('child_process');
 const psTree = require('ps-tree');
 const CONST = require('./const.js');
 
-const is_dev = app.isPackaged;
+const is_dev = !app.isPackaged;
 
 let vlcProcess;
 let half_width = 720;
@@ -32,8 +32,8 @@ const createWindow = () => {
   half_width = width;
   half_height = Math.floor(Size.height / 2);
   const win = new BrowserWindow({
-    width: half_width,
-    height: half_height,
+    width: Math.floor(Size.width / 6),
+    height: 200,
     // resizable: false,
     // titleBarStyle: "default", // mac隐藏导航栏
     // frame: false, // window隐藏导航栏
@@ -123,7 +123,7 @@ const createWindow = () => {
   // 置顶
   win.setAlwaysOnTop(true)
   win.setPosition(width, 0);
-  // Menu.setApplicationMenu(null);
+  Menu.setApplicationMenu(null);
   // const menuBar = [
   //   {
   //     label: '设置',
@@ -138,8 +138,8 @@ const createWindow = () => {
   // // 设置一个顶部菜单栏
   // Menu.setApplicationMenu(menu);
   if (is_dev) {
-    win.webContents.openDevTools({ mode: 'detach' })
     win.loadURL('http://localhost:3000');
+    win.webContents.openDevTools({ mode: 'detach' })
   } else {
     win.loadFile(path.join(__dirname, './build/index.html'));
   }

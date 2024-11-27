@@ -78,70 +78,72 @@ export default function App() {
   })
   return <Observer>{() => (
     <FullHeight>
-      <Padding style={{ display: local[CONST.STORE.SHOW_DIR] ? 'flex' : 'none', flexDirection: 'row' }}>
-        <Input
-          value={local.dir_path}
-          readOnly
-          placeholder='请选中文件夹路径'
-          addonBefore={<FolderOutlined onClick={() => {
-            window.electron[CONST.EVENT.OpenDialog]().then(result => {
-              if (result.canceled === false && result.filePaths[0]) {
-                const filepath = result.filePaths[0]
-                window.electron.setStoreValue(CONST.STORE.DIR_PATH, filepath)
-                local.dir_path = filepath
-              }
-            })
-          }}
-          />}
-          addonAfter={<CloseOutlined onClick={() => {
-            window.electron[CONST.EVENT.StopVlc]();
-          }} />}
-        />
-        <Button style={{ marginLeft: 10 }} onClick={() => {
-          window.location.reload();
-        }}>刷新</Button>
-      </Padding>
-      <Padding>
-        <Input
-          disabled={!local.dir_path}
-          autoFocus
-          allowClear
-          addonBefore={<Select value={local.file_suffix} onSelect={v => {
-            local.file_suffix = v;
-            window.electron.setStoreValue(CONST.STORE.FILE_SUFFIX, v)
-          }}>
-            <Select.Option value="mxf"></Select.Option>
-            <Select.Option value="mp4"></Select.Option>
-          </Select>}
-          addonAfter={<SearchOutlined onClick={onSearch} />}
-          onCompositionStart={() => {
-            local.isCompositing = true;
-          }}
-          onCompositionEnd={(e) => {
-            local.isCompositing = false;
-            local.search = e.target.value;
-          }}
-          onChange={e => {
-            if (!local.isCompositing) {
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', height: '100%' }}>
+        <Padding style={{ display: local[CONST.STORE.SHOW_DIR] ? 'flex' : 'none', flexDirection: 'row' }}>
+          <Input
+            value={local.dir_path}
+            readOnly
+            placeholder='请选中文件夹路径'
+            addonBefore={<FolderOutlined onClick={() => {
+              window.electron[CONST.EVENT.OpenDialog]().then(result => {
+                if (result.canceled === false && result.filePaths[0]) {
+                  const filepath = result.filePaths[0]
+                  window.electron.setStoreValue(CONST.STORE.DIR_PATH, filepath)
+                  local.dir_path = filepath
+                }
+              })
+            }}
+            />}
+            addonAfter={<CloseOutlined onClick={() => {
+              window.electron[CONST.EVENT.StopVlc]();
+            }} />}
+          />
+          <Button style={{ marginLeft: 10 }} onClick={() => {
+            window.location.reload();
+          }}>刷新</Button>
+        </Padding>
+        <Padding>
+          <Input
+            disabled={!local.dir_path}
+            autoFocus
+            allowClear
+            addonBefore={<Select value={local.file_suffix} onSelect={v => {
+              local.file_suffix = v;
+              window.electron.setStoreValue(CONST.STORE.FILE_SUFFIX, v)
+            }}>
+              <Select.Option value="mxf"></Select.Option>
+              <Select.Option value="mp4"></Select.Option>
+            </Select>}
+            addonAfter={<SearchOutlined onClick={onSearch} />}
+            onCompositionStart={() => {
+              local.isCompositing = true;
+            }}
+            onCompositionEnd={(e) => {
+              local.isCompositing = false;
               local.search = e.target.value;
-            }
-          }}
-          onKeyDown={e => {
-            if (!local.isCompositing && e.key === 'Enter') {
-              onSearch();
-            }
-          }}
-          onPaste={e => {
-            console.log(e.target.value)
-          }}
-        />
-      </Padding>
-      <FullHeightAuto style={{ padding: '15px 0 15px 15px' }}>
-        {/* <Button onClick={() => {
+            }}
+            onChange={e => {
+              if (!local.isCompositing) {
+                local.search = e.target.value;
+              }
+            }}
+            onKeyDown={e => {
+              if (!local.isCompositing && e.key === 'Enter') {
+                onSearch();
+              }
+            }}
+            onPaste={e => {
+              console.log(e.target.value)
+            }}
+          />
+        </Padding>
+      </div>
+      {/* <Button onClick={() => {
           window.electron.setTitle('test')
         }}>修改标题</Button> */}
+      {/* <FullHeightAuto style={{ padding: '15px 0 15px 15px' }}>
         <AlignAside style={{ height: '100%' }}>
-          <div style={{ position: 'relative', height: '100%', borderRight: '2px dashed #ccc', width: local.is_fold ? 0 : 280 }}>
+          <div style={{ position: 'relative', height: '100%', borderRight: '2px dashed #ccc', width: local.is_fold ? 0 : 250 }}>
             <div style={{ height: '100%', overflowX: 'hidden', overflowY: 'auto' }}>
               {!local[CONST.STORE.IS_FOLD] && local.files.map(file => (
                 <FileItem
@@ -178,7 +180,7 @@ export default function App() {
             </div>
           </div>
         </AlignAside >
-      </FullHeightAuto >
+      </FullHeightAuto > */}
     </FullHeight >
   )
   }</Observer >

@@ -55,6 +55,9 @@ const createWindow = () => {
         properties: ['openDirectory']
       }).then((result) => {
         resolve(result);
+      }).catch(e => {
+        console.log(e);
+        resolve({})
       })
     })
 
@@ -132,7 +135,13 @@ const createWindow = () => {
   win.setAlwaysOnTop(true)
   win.setPosition(Math.floor(width / 2), 0);
   Menu.setApplicationMenu(null);
-  win.loadFile(path.join(__dirname, './build/index.html'));
+  if (app.isPackaged) {
+    win.loadFile(path.join(__dirname, './build/index.html'));
+  } else {
+    win.loadURL('http://localhost:3000');
+    win.webContents.openDevTools({ mode: 'detach' })
+  }
+
 }
 app.whenReady().then(() => {
 
@@ -147,8 +156,8 @@ app.whenReady().then(() => {
 function startVLCInElectron(parentWindow, filepath) {
   // 启动 VLC 并嵌入窗口
   const command = process.platform === 'win32'
-    ? `"${path.normalize('C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe')}" --no-qt-fs --qt-start-minimized --width=${Math.floor(width / 2.5)} --video-x=0 --video-y=0 --aspect-ratio=16:9 --zoom=0.3 --video-on-top --video-title="Embedded VLC" ${filepath}`
-    : `/Applications/VLC.app/Contents/MacOS/VLC --width=${Math.floor(width / 2.5)} --video-x=0 --video-y=0 --aspect-ratio=16:9 --zoom=0.3 --video-on-top ${filepath}`;
+    ? `"${path.normalize('C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe')}" --no-qt-fs --qt-start-minimized --width=${Math.floor(width / 2.5)} --video-x=0 --video-y=0 --zoom=0.3 --video-on-top --video-title="Embedded VLC" "${filepath}"`
+    : `/Applications/VLC.app/Contents/MacOS/VLC --width=${Math.floor(width / 2.5)} --video-x=0 --video-y=0 --zoom=0.3 --video-on-top "${filepath}"`;
   vlcProcess = spawn(command, {
     shell: true,
     detached: true,

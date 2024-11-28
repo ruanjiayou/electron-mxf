@@ -46,6 +46,7 @@ export default function App() {
     const filename = local.search.trim();
     const files = await window.electron[CONST.EVENT.GetFilesSortByTime](local.dir_path, filename, local.file_suffix);
     local.files = files;
+    console.log(files, 'files')
     if (files.length) {
       local.setPlayUrl(local.files[0])
       if (window.electron) {
@@ -86,6 +87,7 @@ export default function App() {
             placeholder='请选中文件夹路径'
             addonBefore={<FolderOutlined onClick={() => {
               window.electron[CONST.EVENT.OpenDialog]().then(result => {
+                console.log(result, 'choose')
                 if (result.canceled === false && result.filePaths[0]) {
                   const filepath = result.filePaths[0]
                   window.electron.setStoreValue(CONST.STORE.DIR_PATH, filepath)

@@ -6,7 +6,7 @@
   "homepage": ".",
   "scripts": {
     "start": "cross-env NODE_ENV=development PUBLIC_URL=. react-scripts start",
-    "build": "react-app-rewired build",
+    "build": "react-scripts build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Max",

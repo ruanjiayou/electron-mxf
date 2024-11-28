@@ -7,7 +7,7 @@ const { spawn, execSync } = require('child_process');
 const psTree = require('ps-tree');
 const CONST = require('./const.js');
 
-const is_dev = !app.isPackaged;
+const is_dev = process.env.NODE_ENV === 'development';
 
 let vlcProcess;
 let width = 720;
@@ -69,8 +69,7 @@ const createWindow = () => {
     if (existed) {
       const files = fs.readdirSync(dir, { encoding: 'utf-8' });
       files.filter(file => {
-        file = file.toLowerCase();
-        return file.includes(filename.toLowerCase()) && (!suffix || file.endsWith(suffix));
+        return file.startsWith(filename) && (!suffix || file.endsWith(suffix));
       }).forEach((file) => {
         results.push({ filename: file, mtime: fs.statSync(path.join(dir, file)).mtime })
       });
@@ -135,7 +134,8 @@ const createWindow = () => {
   win.setAlwaysOnTop(true)
   win.setPosition(Math.floor(width / 2), 0);
   Menu.setApplicationMenu(null);
-  if (app.isPackaged) {
+
+  if (!is_dev) {
     win.loadFile(path.join(__dirname, './build/index.html'));
   } else {
     win.loadURL('http://localhost:3000');
@@ -156,7 +156,7 @@ app.whenReady().then(() => {
 function startVLCInElectron(parentWindow, filepath) {
   // 启动 VLC 并嵌入窗口
   const command = process.platform === 'win32'
-    ? `"${path.normalize('C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe')}" --no-qt-fs --qt-start-minimized --width=${Math.floor(width / 2.5)} --video-x=0 --video-y=0 --zoom=0.3 --video-on-top --video-title="Embedded VLC" "${filepath}"`
+    ? `"${path.normalize('C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe')}" --no-qt-fs --qt-start-minimized --width=${Math.floor(width / 2.5)} --video-x=0 --video-y=0 --zoom=0.3 --video-on-top --sout-all --sout #display "${filepath}"`
     : `/Applications/VLC.app/Contents/MacOS/VLC --width=${Math.floor(width / 2.5)} --video-x=0 --video-y=0 --zoom=0.3 --video-on-top "${filepath}"`;
   vlcProcess = spawn(command, {
     shell: true,
